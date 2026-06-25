@@ -61,6 +61,19 @@ class SplitBookmarksTest(unittest.TestCase):
             self.assertIn(f"{PAGES_DIR}/", index_content)
             self.assertIn("habr.com", index_content)
 
+    def test_split_bookmarks_hidden_class_overrides_grid_item_display(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "bookmarks.html"
+            output = Path(tmp) / "site"
+            source.write_text(SAMPLE_HTML, encoding="utf-8")
+
+            split_bookmarks(source, output)
+
+            group_content = (output / PAGES_DIR / "all.html").read_text(encoding="utf-8")
+
+            self.assertIn(".hidden { display: none !important; }", group_content)
+            self.assertIn("item.classList.toggle('hidden', !isVisible);", group_content)
+
 
 if __name__ == "__main__":
     unittest.main()

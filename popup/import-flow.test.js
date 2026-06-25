@@ -111,6 +111,55 @@ test('import flow parses text and opens imported URLs', async () => {
   ]);
 });
 
+test('import flow limits opened URLs using configured import limit', async () => {
+  const calls = [];
+  const openedUrls = [];
+  const savedLimits = [];
+  const elements = {
+    importBtn: createElement(),
+    importLimit: createElement({ value: '2' }),
+    importText: createElement({ value: 'links' }),
+    status: createElement(),
+  };
+  const flow = createImportFlow({
+    defaultSettings: {
+      importLimit: 50,
+    },
+    dom: createDomStub(calls),
+    importFileCore: {
+      parseImportedLinks() {
+        return [
+          { title: 'Docs', url: 'https://example.com/docs' },
+          { title: 'Tracker', url: 'https://example.com/issues' },
+          { title: 'Mail', url: 'https://example.com/mail' },
+        ];
+      },
+    },
+    logger: console,
+    settingsRepository: {
+      async saveImportLimit(value) {
+        savedLimits.push(value);
+      },
+    },
+    tabsRepository: {
+      async openUrls(urls) {
+        openedUrls.push(...urls);
+
+        return urls.length;
+      },
+    },
+  });
+
+  await flow.importLinks(elements);
+
+  assert.deepEqual(savedLimits, [2]);
+  assert.deepEqual(openedUrls, [
+    'https://example.com/docs',
+    'https://example.com/issues',
+  ]);
+  assert.equal(elements.status.textContent, 'Открыто вкладок: 2 из 3.');
+});
+
 test('import flow delegates file picker click to hidden file input', () => {
   const elements = {
     importFile: createElement(),

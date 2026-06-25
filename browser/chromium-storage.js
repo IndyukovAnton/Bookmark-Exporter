@@ -13,8 +13,19 @@
     closeAfterExport: false,
     filename: 'open-tabs',
     format: 'md',
+    importLimit: 50,
     savePathName: '',
   };
+
+  function normalizeImportLimit(value) {
+    const limit = Number(value);
+
+    if (!Number.isInteger(limit) || limit < 1) {
+      return DEFAULT_SETTINGS.importLimit;
+    }
+
+    return limit;
+  }
 
   function createSettingsRepository(storageArea) {
     async function getSettings() {
@@ -24,9 +35,14 @@
 
       const settings = await storageArea.get(DEFAULT_SETTINGS);
 
-      return {
+      const mergedSettings = {
         ...DEFAULT_SETTINGS,
         ...settings,
+      };
+
+      return {
+        ...mergedSettings,
+        importLimit: normalizeImportLimit(mergedSettings.importLimit),
       };
     }
 
@@ -36,7 +52,7 @@
       }
 
       await storageArea.set({
-        closeAfterExport: Boolean(settings.closeAfterExport),
+        closeAfterExport: DEFAULT_SETTINGS.closeAfterExport,
         filename: settings.filename || DEFAULT_SETTINGS.filename,
         format: settings.format || DEFAULT_SETTINGS.format,
       });
@@ -50,9 +66,20 @@
       await storageArea.set({ savePathName });
     }
 
+    async function saveImportLimit(importLimit) {
+      if (!storageArea || typeof storageArea.set !== 'function') {
+        throw new Error('Нет доступа к сохранению настроек расширения.');
+      }
+
+      await storageArea.set({
+        importLimit: normalizeImportLimit(importLimit),
+      });
+    }
+
     return {
       getSettings,
       saveExportSettings,
+      saveImportLimit,
       savePathName,
     };
   }
@@ -60,5 +87,6 @@
   return {
     DEFAULT_SETTINGS,
     createSettingsRepository,
+    normalizeImportLimit,
   };
 }));

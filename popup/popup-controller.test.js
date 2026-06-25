@@ -41,6 +41,7 @@ test('popup controller restores settings, binds events and refreshes tabs summar
   const formatInput = createElement();
   const elements = {
     closeAfterExport: createElement(),
+    copyDiagnosticsBtn: createElement(),
     exportPanel: createElement(),
     exportTabBtn: createElement(),
     exportBtn: createElement(),
@@ -48,12 +49,15 @@ test('popup controller restores settings, binds events and refreshes tabs summar
     importBtn: createElement(),
     importFile: createElement(),
     importFileName: createElement(),
+    importLimit: createElement(),
     importPanel: createElement({ hidden: true }),
     importTabBtn: createElement(),
     importText: createElement(),
     savePath: createElement(),
     selectPathBtn: createElement(),
     selectImportFileBtn: createElement(),
+    settingsPanel: createElement({ hidden: true }),
+    settingsTabBtn: createElement(),
     status: createElement(),
     tabsCount: createElement(),
     tabsLabel: createElement(),
@@ -65,14 +69,21 @@ test('popup controller restores settings, binds events and refreshes tabs summar
 
     return null;
   });
+  const savedDirectoryHandle = { name: 'Work exports' };
   const controller = createPopupController({
     documentRef,
+    directoryHandleRepository: {
+      async getDirectoryHandle() {
+        return savedDirectoryHandle;
+      },
+    },
     settingsRepository: {
       async getSettings() {
         return {
           closeAfterExport: true,
           filename: 'saved-tabs',
           format: 'txt',
+          importLimit: 25,
           savePathName: 'Work exports',
         };
       },
@@ -92,15 +103,72 @@ test('popup controller restores settings, binds events and refreshes tabs summar
 
   assert.equal(formatInput.checked, true);
   assert.equal(elements.filename.value, 'saved-tabs');
-  assert.equal(elements.closeAfterExport.checked, true);
+  assert.equal(elements.closeAfterExport.checked, false);
   assert.equal(elements.savePath.value, 'Work exports');
+  assert.equal(elements.importLimit.value, '25');
   assert.equal(typeof elements.exportBtn.listeners.click, 'function');
   assert.equal(typeof elements.importBtn.listeners.click, 'function');
   assert.equal(typeof elements.selectPathBtn.listeners.click, 'function');
   assert.equal(typeof elements.exportTabBtn.listeners.click, 'function');
   assert.equal(typeof elements.importTabBtn.listeners.click, 'function');
+  assert.equal(typeof elements.settingsTabBtn.listeners.click, 'function');
+  assert.equal(typeof elements.importLimit.listeners.change, 'function');
+  assert.equal(typeof elements.copyDiagnosticsBtn.listeners.click, 'function');
   assert.equal(elements.tabsCount.textContent, '2');
   assert.equal(elements.tabsLabel.textContent, 'вкладки');
+});
+
+test('popup controller copies tab diagnostics to clipboard', async () => {
+  const clipboardWrites = [];
+  const elements = {
+    status: createElement(),
+  };
+  const documentRef = createDocumentStub({}, () => null);
+  const controller = createPopupController({
+    documentRef,
+    settingsRepository: {},
+    tabsDiagnosticsProvider: async () => ({
+      browser: {
+        isYandex: true,
+      },
+      tabQueries: [
+        {
+          counts: {
+            total: 56,
+          },
+          name: 'activeWindowScope',
+        },
+      ],
+    }),
+    tabsRepository: {},
+    windowRef: {
+      navigator: {
+        clipboard: {
+          async writeText(text) {
+            clipboardWrites.push(text);
+          },
+        },
+      },
+    },
+  });
+
+  await controller.copyTabsDiagnostics(elements);
+
+  assert.deepEqual(JSON.parse(clipboardWrites[0]), {
+    browser: {
+      isYandex: true,
+    },
+    tabQueries: [
+      {
+        counts: {
+          total: 56,
+        },
+        name: 'activeWindowScope',
+      },
+    ],
+  });
+  assert.equal(elements.status.className, 'status status--success');
+  assert.match(elements.status.textContent, /Диагностика скопирована/);
 });
 
 test('popup controller restores JSON format from settings', async () => {
@@ -114,12 +182,15 @@ test('popup controller restores JSON format from settings', async () => {
     importBtn: createElement(),
     importFile: createElement(),
     importFileName: createElement(),
+    importLimit: createElement(),
     importPanel: createElement({ hidden: true }),
     importTabBtn: createElement(),
     importText: createElement(),
     savePath: createElement(),
     selectPathBtn: createElement(),
     selectImportFileBtn: createElement(),
+    settingsPanel: createElement({ hidden: true }),
+    settingsTabBtn: createElement(),
     status: createElement(),
     tabsCount: createElement(),
     tabsLabel: createElement(),
@@ -139,6 +210,7 @@ test('popup controller restores JSON format from settings', async () => {
           closeAfterExport: false,
           filename: 'saved-tabs',
           format: 'json',
+          importLimit: 50,
           savePathName: 'Work exports',
         };
       },
@@ -166,12 +238,15 @@ test('popup controller switches between export and import tabs', async () => {
     importBtn: createElement(),
     importFile: createElement(),
     importFileName: createElement(),
+    importLimit: createElement(),
     importPanel: createElement({ hidden: true }),
     importTabBtn: createElement(),
     importText: createElement(),
     savePath: createElement(),
     selectPathBtn: createElement(),
     selectImportFileBtn: createElement(),
+    settingsPanel: createElement({ hidden: true }),
+    settingsTabBtn: createElement(),
     status: createElement(),
     tabsCount: createElement(),
     tabsLabel: createElement(),
@@ -204,8 +279,18 @@ test('popup controller switches between export and import tabs', async () => {
 
   assert.equal(elements.exportPanel.hidden, false);
   assert.equal(elements.importPanel.hidden, true);
+  assert.equal(elements.settingsPanel.hidden, true);
   assert.equal(elements.exportTabBtn.className, 'mode-tab mode-tab--active');
   assert.equal(elements.importTabBtn.className, 'mode-tab');
+
+  elements.settingsTabBtn.listeners.click();
+
+  assert.equal(elements.exportPanel.hidden, true);
+  assert.equal(elements.importPanel.hidden, true);
+  assert.equal(elements.settingsPanel.hidden, false);
+  assert.equal(elements.exportTabBtn.className, 'mode-tab');
+  assert.equal(elements.importTabBtn.className, 'mode-tab');
+  assert.equal(elements.settingsTabBtn.className, 'mode-tab mode-tab--active');
 });
 
 test('popup controller imports pasted links and opens them through tabs repository', async () => {
@@ -294,12 +379,15 @@ test('popup controller reads selected import file into textarea', async () => {
       ],
     }),
     importFileName: createElement(),
+    importLimit: createElement(),
     importPanel: createElement({ hidden: true }),
     importTabBtn: createElement(),
     importText: createElement(),
     savePath: createElement(),
     selectPathBtn: createElement(),
     selectImportFileBtn: createElement(),
+    settingsPanel: createElement({ hidden: true }),
+    settingsTabBtn: createElement(),
     status: createElement(),
     tabsCount: createElement(),
     tabsLabel: createElement(),

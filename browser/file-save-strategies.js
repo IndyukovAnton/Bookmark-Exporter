@@ -32,6 +32,28 @@
     await writable.close();
   }
 
+  async function hasDirectoryWritePermission(directoryHandle) {
+    const permissionOptions = { mode: 'readwrite' };
+
+    if (typeof directoryHandle.queryPermission === 'function') {
+      const permission = await directoryHandle.queryPermission(permissionOptions);
+
+      if (permission === 'granted') {
+        return true;
+      }
+
+      if (permission === 'denied') {
+        return false;
+      }
+    }
+
+    if (typeof directoryHandle.requestPermission === 'function') {
+      return await directoryHandle.requestPermission(permissionOptions) === 'granted';
+    }
+
+    return true;
+  }
+
   function downloadExportFile(exportFile, options = {}) {
     const documentRef = options.documentRef || document;
     const windowRef = options.windowRef || window;
@@ -56,16 +78,20 @@
   }
 
   async function saveExportFile(exportFile, options = {}) {
-    const selectedDirectoryHandle = options.selectedDirectoryHandle;
+    const directoryHandle = options.selectedDirectoryHandle || options.savedDirectoryHandle;
     const windowRef = options.windowRef;
 
-    if (selectedDirectoryHandle && supportsDirectoryPicker(windowRef)) {
-      await writeExportFile(selectedDirectoryHandle, exportFile);
+    if (directoryHandle && supportsDirectoryPicker(windowRef)) {
+      const canWriteDirectory = await hasDirectoryWritePermission(directoryHandle);
 
-      return {
-        locationName: selectedDirectoryHandle.name || DEFAULT_PICKED_DIRECTORY_NAME,
-        usedDirectoryPicker: true,
-      };
+      if (canWriteDirectory) {
+        await writeExportFile(directoryHandle, exportFile);
+
+        return {
+          locationName: directoryHandle.name || DEFAULT_PICKED_DIRECTORY_NAME,
+          usedDirectoryPicker: true,
+        };
+      }
     }
 
     const downloadFile = options.downloadFile || ((file) => downloadExportFile(file, options));
@@ -82,6 +108,7 @@
     DEFAULT_DOWNLOAD_LOCATION_NAME,
     DEFAULT_PICKED_DIRECTORY_NAME,
     downloadExportFile,
+    hasDirectoryWritePermission,
     saveExportFile,
     selectDirectory,
     supportsDirectoryPicker,

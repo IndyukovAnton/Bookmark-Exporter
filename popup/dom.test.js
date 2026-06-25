@@ -17,6 +17,14 @@ function createElement(overrides = {}) {
     className: '',
     disabled: false,
     hidden: false,
+    ownerDocument: {
+      createElement(tagName) {
+        return createElement({ tagName });
+      },
+    },
+    replaceChildren(...children) {
+      this.children = children;
+    },
     setAttribute(name, value) {
       attributes[name] = value;
     },
@@ -29,6 +37,7 @@ test('getElements reads popup DOM elements by stable ids', () => {
   const calls = [];
   const elements = {
     closeAfterExport: createElement(),
+    copyDiagnosticsBtn: createElement(),
     exportBtn: createElement(),
     exportPanel: createElement(),
     exportTabBtn: createElement(),
@@ -36,12 +45,15 @@ test('getElements reads popup DOM elements by stable ids', () => {
     importBtn: createElement(),
     importFile: createElement(),
     importFileName: createElement(),
+    importLimit: createElement(),
     importPanel: createElement(),
     importTabBtn: createElement(),
     importText: createElement(),
     savePath: createElement(),
     selectImportFileBtn: createElement(),
     selectPathBtn: createElement(),
+    settingsPanel: createElement(),
+    settingsTabBtn: createElement(),
     status: createElement(),
     tabsCount: createElement(),
     tabsLabel: createElement(),
@@ -59,24 +71,35 @@ test('getElements reads popup DOM elements by stable ids', () => {
   assert.equal(result.exportBtn, elements.exportBtn);
   assert.equal(calls.includes('importBtn'), true);
   assert.equal(calls.includes('exportTabBtn'), true);
+  assert.equal(calls.includes('settingsTabBtn'), true);
+  assert.equal(result.importLimit, elements.importLimit);
+  assert.equal(result.selectPathBtn, elements.selectPathBtn);
+  assert.equal(result.copyDiagnosticsBtn, elements.copyDiagnosticsBtn);
+  assert.equal(calls.includes('exportGroupSelect'), false);
+  assert.equal(calls.includes('exportGroupHint'), false);
 });
 
-test('showMode switches visible panel and selected tab state', () => {
+test('showMode switches visible panel and selected tab state across three modes', () => {
   const elements = {
     exportPanel: createElement(),
     exportTabBtn: createElement(),
     importPanel: createElement(),
     importTabBtn: createElement(),
+    settingsPanel: createElement(),
+    settingsTabBtn: createElement(),
   };
 
-  showMode(elements, 'import');
+  showMode(elements, 'settings');
 
   assert.equal(elements.exportPanel.hidden, true);
-  assert.equal(elements.importPanel.hidden, false);
+  assert.equal(elements.importPanel.hidden, true);
+  assert.equal(elements.settingsPanel.hidden, false);
   assert.equal(elements.exportTabBtn.className, 'mode-tab');
-  assert.equal(elements.importTabBtn.className, 'mode-tab mode-tab--active');
+  assert.equal(elements.importTabBtn.className, 'mode-tab');
+  assert.equal(elements.settingsTabBtn.className, 'mode-tab mode-tab--active');
   assert.equal(elements.exportTabBtn.attributes['aria-selected'], 'false');
-  assert.equal(elements.importTabBtn.attributes['aria-selected'], 'true');
+  assert.equal(elements.importTabBtn.attributes['aria-selected'], 'false');
+  assert.equal(elements.settingsTabBtn.attributes['aria-selected'], 'true');
 });
 
 test('setStatus and busy helpers update focused UI state only', () => {

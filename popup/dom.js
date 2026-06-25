@@ -12,6 +12,7 @@
   function getElements(documentRef) {
     return {
       closeAfterExport: documentRef.getElementById('closeAfterExport'),
+      copyDiagnosticsBtn: documentRef.getElementById('copyDiagnosticsBtn'),
       exportPanel: documentRef.getElementById('exportPanel'),
       exportTabBtn: documentRef.getElementById('exportTabBtn'),
       exportBtn: documentRef.getElementById('exportBtn'),
@@ -19,12 +20,15 @@
       importBtn: documentRef.getElementById('importBtn'),
       importFile: documentRef.getElementById('importFile'),
       importFileName: documentRef.getElementById('importFileName'),
+      importLimit: documentRef.getElementById('importLimit'),
       importPanel: documentRef.getElementById('importPanel'),
       importTabBtn: documentRef.getElementById('importTabBtn'),
       importText: documentRef.getElementById('importText'),
       savePath: documentRef.getElementById('savePath'),
       selectImportFileBtn: documentRef.getElementById('selectImportFileBtn'),
       selectPathBtn: documentRef.getElementById('selectPathBtn'),
+      settingsPanel: documentRef.getElementById('settingsPanel'),
+      settingsTabBtn: documentRef.getElementById('settingsTabBtn'),
       status: documentRef.getElementById('status'),
       tabsCount: documentRef.getElementById('tabsCount'),
       tabsLabel: documentRef.getElementById('tabsLabel'),
@@ -32,14 +36,11 @@
   }
 
   function showMode(elements, mode) {
-    const isImportMode = mode === 'import';
+    const activeMode = mode === 'import' || mode === 'settings' ? mode : 'export';
 
-    elements.exportPanel.hidden = isImportMode;
-    elements.importPanel.hidden = !isImportMode;
-    elements.exportTabBtn.className = isImportMode ? 'mode-tab' : 'mode-tab mode-tab--active';
-    elements.importTabBtn.className = isImportMode ? 'mode-tab mode-tab--active' : 'mode-tab';
-    setAttribute(elements.exportTabBtn, 'aria-selected', String(!isImportMode));
-    setAttribute(elements.importTabBtn, 'aria-selected', String(isImportMode));
+    setModeState(elements.exportPanel, elements.exportTabBtn, activeMode === 'export');
+    setModeState(elements.importPanel, elements.importTabBtn, activeMode === 'import');
+    setModeState(elements.settingsPanel, elements.settingsTabBtn, activeMode === 'settings');
   }
 
   function setExportBusy(elements, value) {
@@ -62,6 +63,18 @@
     if (element && typeof element.setAttribute === 'function') {
       element.setAttribute(name, value);
     }
+  }
+
+  function setModeState(panel, tab, isActive) {
+    if (panel) {
+      panel.hidden = !isActive;
+    }
+
+    if (tab) {
+      tab.className = isActive ? 'mode-tab mode-tab--active' : 'mode-tab';
+    }
+
+    setAttribute(tab, 'aria-selected', String(isActive));
   }
 
   return {

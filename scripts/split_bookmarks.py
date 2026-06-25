@@ -103,7 +103,7 @@ input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #cf
 input:focus-visible { outline: 3px solid rgba(23, 107, 87, 0.24); border-color: #176b57; }
 #search-summary { margin: 0; color: #5f6b7a; font-size: 13px; }
 #empty-search { margin: 16px 0 0; padding: 16px; border: 1px solid #d9dee7; border-radius: 8px; color: #5f6b7a; background: #fff; text-align: center; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; padding: 0; list-style: none; }
 .tabs a { display: inline-block; padding: 8px 14px; border: 1px solid #cfd7e1; border-radius: 999px; color: #18212f; background: #fff; text-decoration: none; font-size: 14px; font-weight: 600; }
 .tabs a:hover { border-color: #176b57; color: #176b57; }

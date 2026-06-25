@@ -21,6 +21,7 @@
 		<div class="mode-tabs" role="tablist" aria-label="Режим работы">
 			<button class="mode-tab mode-tab--active" type="button" id="exportTabBtn" role="tab" aria-selected="true" aria-controls="exportPanel">Экспорт</button>
 			<button class="mode-tab" type="button" id="importTabBtn" role="tab" aria-selected="false" aria-controls="importPanel">Импорт</button>
+			<button class="mode-tab" type="button" id="settingsTabBtn" role="tab" aria-selected="false" aria-controls="settingsPanel">Настройки</button>
 		</div>
 
 		<section class="panel" id="exportPanel" role="tabpanel" aria-labelledby="exportTabBtn" aria-label="Настройки экспорта">
@@ -52,12 +53,12 @@
 			</div>
 
 			<div class="field">
-				<label class="field-label" for="savePath">Куда сохранить</label>
-				<p class="field-hint">Если папка не выбрана, файл будет скачан в Загрузки.</p>
+				<label class="field-label" for="savePath">Папка сохранения</label>
 				<div class="path-row">
 					<input class="path-input" type="text" id="savePath" value="Загрузки" readonly>
-					<button class="secondary-btn" type="button" id="selectPathBtn">Выбрать</button>
+					<button class="secondary-btn" type="button" id="selectPathBtn">Выбрать папку</button>
 				</div>
+				<p class="field-hint">Если папка не выбрана, используется сохранённая папка или обычное скачивание.</p>
 			</div>
 
 			<label class="switch-row" for="closeAfterExport">
@@ -91,6 +92,20 @@
 			<button class="primary-btn" type="button" id="importBtn">Открыть ссылки</button>
 		</section>
 
+		<section class="panel" id="settingsPanel" role="tabpanel" aria-labelledby="settingsTabBtn" aria-label="Настройки расширения" hidden>
+			<div class="field">
+				<label class="field-label" for="importLimit">Лимит импорта</label>
+				<input class="text-input" type="number" id="importLimit" min="1" step="1" value="50" inputmode="numeric">
+				<p class="field-hint">По умолчанию открывается не больше 50 вкладок за один импорт.</p>
+			</div>
+
+			<div class="field">
+				<span class="field-label">Диагностика Яндекс.Браузера</span>
+				<p class="field-hint">Копирует технический отчёт по вкладкам без полных URL.</p>
+				<button class="secondary-btn" type="button" id="copyDiagnosticsBtn">Скопировать диагностику</button>
+			</div>
+		</section>
+
 		<div class="status" id="status" role="status" aria-live="polite" hidden></div>
 	</main>
 
@@ -104,6 +119,7 @@
 	<script src="core/import-file.js"></script>
 	<script src="browser/chromium-tabs.js"></script>
 	<script src="browser/chromium-storage.js"></script>
+	<script src="browser/directory-handle-storage.js"></script>
 	<script src="browser/file-save-strategies.js"></script>
 	<script src="popup/messages.js"></script>
 	<script src="popup/dom.js"></script>

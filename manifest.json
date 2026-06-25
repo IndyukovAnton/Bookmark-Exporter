@@ -3,7 +3,7 @@
   "name": "BBE - Browser Bookmarks Exporter",
 	"description": "Расширение, которое позволяет сохранить открытые вкладки в отдельный файл и закрыть в самом браузере.",
   "version": "2.2",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "tabGroups"],
   "action": {
     "default_popup": "popup.html",
 		"default_icon": "icon.png"

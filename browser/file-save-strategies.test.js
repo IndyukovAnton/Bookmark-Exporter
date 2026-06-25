@@ -70,3 +70,81 @@ test('saveExportFile falls back to browser download when directory picker is una
     usedDirectoryPicker: false,
   });
 });
+
+test('saveExportFile writes into saved directory handle when no directory was selected in current popup session', async () => {
+  const calls = [];
+  const directoryHandle = {
+    name: 'Saved exports',
+    async queryPermission(options) {
+      calls.push({ queryPermission: options });
+
+      return 'prompt';
+    },
+    async requestPermission(options) {
+      calls.push({ requestPermission: options });
+
+      return 'granted';
+    },
+    async getFileHandle(filename, options) {
+      calls.push({ filename, options });
+
+      return {
+        async createWritable() {
+          return {
+            async write(content) {
+              calls.push({ content });
+            },
+            async close() {
+              calls.push({ closed: true });
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const result = await saveExportFile(
+    { content: 'content', fullFilename: 'tabs.md', mimeType: 'text/markdown' },
+    {
+      savedDirectoryHandle: directoryHandle,
+      windowRef: { showDirectoryPicker() {} },
+    },
+  );
+
+  assert.deepEqual(calls, [
+    { queryPermission: { mode: 'readwrite' } },
+    { requestPermission: { mode: 'readwrite' } },
+    { filename: 'tabs.md', options: { create: true } },
+    { content: 'content' },
+    { closed: true },
+  ]);
+  assert.deepEqual(result, {
+    locationName: 'Saved exports',
+    usedDirectoryPicker: true,
+  });
+});
+
+test('saveExportFile falls back to browser download when saved directory permission is denied', async () => {
+  const downloadedFiles = [];
+  const exportFile = { content: 'content', fullFilename: 'tabs.txt', mimeType: 'text/plain' };
+  const directoryHandle = {
+    name: 'Denied exports',
+    async queryPermission() {
+      return 'denied';
+    },
+  };
+
+  const result = await saveExportFile(exportFile, {
+    downloadFile(file) {
+      downloadedFiles.push(file);
+    },
+    savedDirectoryHandle: directoryHandle,
+    windowRef: { showDirectoryPicker() {} },
+  });
+
+  assert.deepEqual(downloadedFiles, [exportFile]);
+  assert.deepEqual(result, {
+    locationName: 'Загрузки',
+    usedDirectoryPicker: false,
+  });
+});

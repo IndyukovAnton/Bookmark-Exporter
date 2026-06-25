@@ -163,3 +163,121 @@ test('export flow refreshes tabs summary with fallback to current window', async
   assert.equal(elements.tabsCount.textContent, '1');
   assert.equal(elements.tabsLabel.textContent, 'вкладка');
 });
+
+test('export flow refreshes summary from current tab context without manual group selection', async () => {
+  const currentGroupCalls = [];
+  const elements = {
+    status: createElement(),
+    tabsCount: createElement(),
+    tabsLabel: createElement(),
+  };
+  const flow = createExportFlow({
+    defaultSettings: {
+      filename: 'open-tabs',
+      format: 'md',
+    },
+    documentRef: createDocumentStub('md'),
+    dom: createDomStub([]),
+    popupMessages: {
+      getTabsLabel(count) {
+        return count === 2 ? 'вкладки' : 'вкладок';
+      },
+    },
+    settingsRepository: {},
+    tabsRepository: {
+      async listCurrentGroup() {
+        currentGroupCalls.push(true);
+
+        return [
+          { id: 10, title: 'Video', url: 'https://youtube.com/watch?v=1' },
+          { id: 11, title: 'Playlist', url: 'https://youtube.com/playlist?list=1' },
+        ];
+      },
+    },
+    windowRef: {},
+  });
+
+  await flow.refreshTabsSummary(elements);
+
+  assert.deepEqual(currentGroupCalls, [true]);
+  assert.equal(elements.tabsCount.textContent, '2');
+  assert.equal(elements.tabsLabel.textContent, 'вкладки');
+});
+
+test('export flow restores saved directory handle and uses it for export', async () => {
+  const savedDirectoryHandle = { name: 'Saved exports' };
+  const savedDirectoryHandles = [];
+  const elements = {
+    closeAfterExport: createElement({ checked: false }),
+    exportBtn: createElement(),
+    filename: createElement({ value: 'daily-tabs' }),
+    importLimit: createElement(),
+    savePath: createElement(),
+    status: createElement(),
+    tabsCount: createElement(),
+    tabsLabel: createElement(),
+  };
+  const flow = createExportFlow({
+    defaultSettings: {
+      filename: 'open-tabs',
+      format: 'md',
+      importLimit: 50,
+    },
+    directoryHandleRepository: {
+      async getDirectoryHandle() {
+        return savedDirectoryHandle;
+      },
+    },
+    documentRef: createDocumentStub('md'),
+    dom: createDomStub([]),
+    exportFileCore: {
+      buildExportFile(options) {
+        return {
+          content: options.links.map((link) => link.url).join('\n'),
+          exportedLinksCount: options.links.length,
+          fullFilename: `${options.filename}.md`,
+          mimeType: 'text/markdown',
+        };
+      },
+    },
+    fileSaveStrategies: {
+      DEFAULT_DOWNLOAD_LOCATION_NAME: 'Загрузки',
+      async saveExportFile(file, options) {
+        savedDirectoryHandles.push(options.savedDirectoryHandle);
+
+        return { locationName: options.savedDirectoryHandle.name };
+      },
+    },
+    popupMessages: {
+      buildExportSuccessMessage({ locationName }) {
+        return locationName;
+      },
+      getTabsLabel() {
+        return 'вкладки';
+      },
+    },
+    settingsRepository: {
+      async getSettings() {
+        return {
+          filename: 'daily-tabs',
+          format: 'md',
+          importLimit: 50,
+          savePathName: '',
+        };
+      },
+      async saveExportSettings() {},
+    },
+    tabsRepository: {
+      async listCurrentGroup() {
+        return [{ id: 1, title: 'Docs', url: 'https://example.com/docs' }];
+      },
+    },
+    windowRef: { showDirectoryPicker() {} },
+  });
+
+  await flow.restoreSettings(elements);
+  await flow.exportOpenTabs(elements);
+
+  assert.equal(elements.savePath.value, 'Saved exports');
+  assert.deepEqual(savedDirectoryHandles, [savedDirectoryHandle]);
+});

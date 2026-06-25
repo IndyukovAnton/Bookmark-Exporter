@@ -18,10 +18,12 @@
     const dom = options.dom;
     const defaultSettings = options.defaultSettings;
     const exportFileCore = options.exportFileCore;
+    const directoryHandleRepository = options.directoryHandleRepository || {};
     const fileSaveStrategies = options.fileSaveStrategies || {};
     const popupMessages = options.popupMessages || {};
     const settingsRepository = options.settingsRepository || {};
     const tabsRepository = options.tabsRepository || {};
+    let savedDirectoryHandle = null;
     let selectedDirectoryHandle = null;
     let isExporting = false;
 
@@ -29,19 +31,24 @@
       const settings = await settingsRepository.getSettings();
       const format = normalizeFormat(settings.format);
       const formatInput = documentRef.querySelector(`input[name="format"][value="${format}"]`);
+      savedDirectoryHandle = await loadSavedDirectoryHandle();
 
       if (formatInput) {
         formatInput.checked = true;
       }
 
       elements.filename.value = settings.filename || defaultSettings.filename;
-      elements.closeAfterExport.checked = Boolean(settings.closeAfterExport);
-      elements.savePath.value = settings.savePathName || 'Загрузки';
+      elements.closeAfterExport.checked = false;
+      elements.savePath.value = getSavePathName(settings);
+
+      if (elements.importLimit) {
+        elements.importLimit.value = String(settings.importLimit || defaultSettings.importLimit);
+      }
     }
 
     async function refreshTabsSummary(elements) {
       try {
-        const links = await listExportableTabs();
+        const links = await listExportableTabs(elements);
 
         elements.tabsCount.textContent = String(links.length);
         elements.tabsLabel.textContent = popupMessages.getTabsLabel(links.length);
@@ -60,9 +67,11 @@
 
       try {
         selectedDirectoryHandle = await fileSaveStrategies.selectDirectory(windowRef);
+        savedDirectoryHandle = selectedDirectoryHandle;
         elements.savePath.value = selectedDirectoryHandle.name || 'Выбранная папка';
 
         await settingsRepository.savePathName(elements.savePath.value);
+        await saveDirectoryHandle(selectedDirectoryHandle);
 
         dom.setStatus(elements, 'info', `Папка сохранения: ${elements.savePath.value}`);
       } catch (error) {
@@ -85,7 +94,7 @@
       dom.setStatus(elements, 'info', 'Готовлю список открытых вкладок...');
 
       try {
-        const links = await listExportableTabs();
+        const links = await listExportableTabs(elements);
 
         if (links.length === 0) {
           dom.setStatus(elements, 'info', 'Нет открытых страниц, которые можно экспортировать.');
@@ -99,6 +108,7 @@
         });
         const saveResult = await fileSaveStrategies.saveExportFile(exportFile, {
           documentRef,
+          savedDirectoryHandle,
           selectedDirectoryHandle,
           windowRef,
         });
@@ -149,6 +159,44 @@
 
     function normalizeFormat(format) {
       return ALLOWED_FORMATS.has(format) ? format : defaultSettings.format;
+    }
+
+    function getDefaultSaveLocationName() {
+      return fileSaveStrategies.DEFAULT_DOWNLOAD_LOCATION_NAME || 'Загрузки';
+    }
+
+    function getSavePathName(settings) {
+      if (!savedDirectoryHandle) {
+        return getDefaultSaveLocationName();
+      }
+
+      return settings.savePathName || savedDirectoryHandle.name || getDefaultSaveLocationName();
+    }
+
+    async function loadSavedDirectoryHandle() {
+      if (typeof directoryHandleRepository.getDirectoryHandle !== 'function') {
+        return null;
+      }
+
+      try {
+        return await directoryHandleRepository.getDirectoryHandle();
+      } catch (error) {
+        logger.warn('Could not load saved directory handle:', error);
+
+        return null;
+      }
+    }
+
+    async function saveDirectoryHandle(directoryHandle) {
+      if (typeof directoryHandleRepository.saveDirectoryHandle !== 'function') {
+        return;
+      }
+
+      try {
+        await directoryHandleRepository.saveDirectoryHandle(directoryHandle);
+      } catch (error) {
+        logger.warn('Could not save directory handle:', error);
+      }
     }
 
     function setBusy(elements, value) {

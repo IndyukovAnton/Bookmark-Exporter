@@ -5,7 +5,7 @@ const test = require('node:test');
 test('manifest requests tabs access instead of bookmarks access', () => {
   const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
 
-  assert.deepEqual(manifest.permissions.sort(), ['storage', 'tabs']);
+  assert.deepEqual(manifest.permissions.sort(), ['storage', 'tabGroups', 'tabs']);
   assert.equal(manifest.permissions.includes('bookmarks'), false);
 });
 
@@ -28,8 +28,15 @@ test('popup markup wires the tab exporter UI and scripts', () => {
   assert.match(html, /id="tabsCount"/);
   assert.match(html, /id="closeAfterExport"/);
   assert.match(html, /id="exportTabBtn"/);
+  assert.match(html, /id="exportPanel"[\s\S]*id="selectPathBtn"[\s\S]*id="exportBtn"/);
+  assert.doesNotMatch(html, /id="exportGroupSelect"/);
+  assert.doesNotMatch(html, /id="exportGroupHint"/);
   assert.match(html, /id="importTabBtn"/);
+  assert.match(html, /id="settingsTabBtn"/);
+  assert.match(html, /Настройки/);
   assert.match(html, /id="importText"/);
+  assert.match(html, /id="importLimit"/);
+  assert.match(html, /id="copyDiagnosticsBtn"/);
   assert.match(html, /id="importBtn"/);
   assert.match(html, /name="format" value="json"/);
   assert.match(html, /<link rel="stylesheet" href="popup\/popup\.css">/);
@@ -40,6 +47,7 @@ test('popup markup wires the tab exporter UI and scripts', () => {
     'core/import-file.js',
     'browser/chromium-tabs.js',
     'browser/chromium-storage.js',
+    'browser/directory-handle-storage.js',
     'browser/file-save-strategies.js',
     'popup/messages.js',
     'popup/dom.js',
