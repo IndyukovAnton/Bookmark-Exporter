@@ -3,6 +3,7 @@ const test = require('node:test');
 
 const {
   buildExportFile,
+  deduplicateLinksByUrl,
   sanitizeFilename,
 } = require('./export-file');
 
@@ -81,4 +82,37 @@ test('buildExportFile creates markdown and text exports with configured extensio
   assert.equal(textFile.fullFilename, 'tabs.txt');
   assert.equal(textFile.mimeType, 'text/plain');
   assert.match(textFile.content, /Docs \*API\*\nhttps:\/\/example.com\/docs/);
+});
+
+test('deduplicateLinksByUrl keeps links with the same title when URLs differ', () => {
+  const links = deduplicateLinksByUrl([
+    { title: 'Docs', url: 'https://example.com/docs' },
+    { title: 'Docs', url: 'https://example.com/api' },
+    { title: 'Docs copy', url: 'https://example.com/docs' },
+  ]);
+
+  assert.deepEqual(links, [
+    { title: 'Docs', url: 'https://example.com/docs' },
+    { title: 'Docs', url: 'https://example.com/api' },
+  ]);
+});
+
+test('buildExportFile creates JSON export with unique URL entries', () => {
+  const file = buildExportFile({
+    filename: 'tabs',
+    format: 'json',
+    links: [
+      { id: 1, title: 'Docs', url: 'https://example.com/docs' },
+      { id: 2, title: 'Docs duplicate title', url: 'https://example.com/api' },
+      { id: 3, title: 'Docs duplicate url', url: 'https://example.com/docs' },
+    ],
+  });
+
+  assert.equal(file.fullFilename, 'tabs.json');
+  assert.equal(file.mimeType, 'application/json');
+  assert.deepEqual(JSON.parse(file.content), [
+    { title: 'Docs', url: 'https://example.com/docs' },
+    { title: 'Docs duplicate title', url: 'https://example.com/api' },
+  ]);
+  assert.equal(file.exportedLinksCount, 2);
 });

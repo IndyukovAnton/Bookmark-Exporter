@@ -16,14 +16,41 @@
     const normalizeTabs = options.normalizeTabs || tabsCore.normalizeOpenTabs;
     const logger = options.logger || console;
 
-    async function listCurrentWindow() {
+    function assertCanQueryTabs() {
       if (!tabsApi || typeof tabsApi.query !== 'function') {
         throw new Error('Нет доступа к открытым вкладкам браузера.');
       }
+    }
 
+    async function listCurrentWindow() {
+      assertCanQueryTabs();
       const tabs = await tabsApi.query({ currentWindow: true });
 
       return normalizeTabs(tabs);
+    }
+
+    async function listCurrentGroup() {
+      assertCanQueryTabs();
+
+      const activeTabs = await tabsApi.query({ active: true, currentWindow: true });
+      const activeTab = Array.isArray(activeTabs) ? activeTabs[0] : null;
+
+      if (!activeTab || typeof activeTab.groupId !== 'number') {
+        return listCurrentWindow();
+      }
+
+      try {
+        const tabs = await tabsApi.query({
+          currentWindow: true,
+          groupId: activeTab.groupId,
+        });
+
+        return normalizeTabs(tabs);
+      } catch (error) {
+        logger.warn(`Could not query current tab group ${activeTab.groupId}:`, error);
+
+        return listCurrentWindow();
+      }
     }
 
     async function closeByIds(tabIds) {
@@ -31,13 +58,23 @@
         throw new Error('Нет доступа к закрытию вкладок браузера.');
       }
 
+      const numericTabIds = Array.from(new Set(tabIds.filter((tabId) => typeof tabId === 'number')));
+
+      if (numericTabIds.length === 0) {
+        return 0;
+      }
+
+      try {
+        await tabsApi.remove(numericTabIds);
+
+        return numericTabIds.length;
+      } catch (error) {
+        logger.warn('Could not close tabs in bulk:', error);
+      }
+
       let closedTabsCount = 0;
 
-      for (const tabId of tabIds) {
-        if (typeof tabId !== 'number') {
-          continue;
-        }
-
+      for (const tabId of numericTabIds) {
         try {
           await tabsApi.remove(tabId);
           closedTabsCount += 1;
@@ -51,6 +88,7 @@
 
     return {
       closeByIds,
+      listCurrentGroup,
       listCurrentWindow,
     };
   }

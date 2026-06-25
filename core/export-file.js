@@ -15,6 +15,10 @@
       extension: '.html',
       mimeType: 'text/html',
     },
+    json: {
+      extension: '.json',
+      mimeType: 'application/json',
+    },
     md: {
       extension: '.md',
       mimeType: 'text/markdown',
@@ -47,6 +51,49 @@
     return String(value).replace(/([\\[\]()`*_{}#+\-.!|>])/g, '\\$1');
   }
 
+  function normalizeExportLink(link) {
+    if (!link || typeof link.url !== 'string') {
+      return null;
+    }
+
+    const url = link.url.trim();
+
+    if (url === '') {
+      return null;
+    }
+
+    const title = typeof link.title === 'string' && link.title.trim() !== ''
+      ? link.title.trim()
+      : url;
+
+    return {
+      title,
+      url,
+    };
+  }
+
+  function deduplicateLinksByUrl(links) {
+    if (!Array.isArray(links)) {
+      return [];
+    }
+
+    const seenUrls = new Set();
+    const uniqueLinks = [];
+
+    links.forEach((link) => {
+      const normalizedLink = normalizeExportLink(link);
+
+      if (!normalizedLink || seenUrls.has(normalizedLink.url)) {
+        return;
+      }
+
+      seenUrls.add(normalizedLink.url);
+      uniqueLinks.push(normalizedLink);
+    });
+
+    return uniqueLinks;
+  }
+
   function buildMarkdown(links) {
     const items = links
       .map((link) => `- [${escapeMarkdown(link.title)}](${link.url})`)
@@ -61,6 +108,10 @@
       .join('\n\n');
 
     return `${items}\n`;
+  }
+
+  function buildJson(links) {
+    return `${JSON.stringify(links, null, 2)}\n`;
   }
 
   function buildHtml(links) {
@@ -151,15 +202,18 @@ ${items}
     }
 
     const baseFilename = sanitizeFilename(filename);
+    const exportLinks = deduplicateLinksByUrl(links);
     const contentBuilders = {
       html: buildHtml,
+      json: buildJson,
       md: buildMarkdown,
       txt: buildText,
     };
 
     return {
-      content: contentBuilders[format](links),
+      content: contentBuilders[format](exportLinks),
       extension: config.extension,
+      exportedLinksCount: exportLinks.length,
       fullFilename: `${baseFilename}${config.extension}`,
       mimeType: config.mimeType,
     };
@@ -170,8 +224,10 @@ ${items}
     FORMAT_CONFIG,
     buildExportFile,
     buildHtml,
+    buildJson,
     buildMarkdown,
     buildText,
+    deduplicateLinksByUrl,
     escapeHtml,
     escapeMarkdown,
     sanitizeFilename,

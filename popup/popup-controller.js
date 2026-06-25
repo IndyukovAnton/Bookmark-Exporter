@@ -26,7 +26,7 @@
     root.BookmarkExporterPopupController = popupController;
   }
 }(typeof globalThis !== 'undefined' ? globalThis : undefined, function createPopupControllerModule(root, modules) {
-  const ALLOWED_FORMATS = new Set(['html', 'md', 'txt']);
+  const ALLOWED_FORMATS = new Set(['html', 'json', 'md', 'txt']);
 
   function createPopupController(options = {}) {
     const documentRef = options.documentRef || root.document;
@@ -86,7 +86,7 @@
 
     async function refreshTabsSummary(elements) {
       try {
-        const links = await tabsRepository.listCurrentWindow();
+        const links = await listExportableTabs();
 
         elements.tabsCount.textContent = String(links.length);
         elements.tabsLabel.textContent = popupMessages.getTabsLabel(links.length);
@@ -130,7 +130,7 @@
       setStatus(elements, 'info', 'Готовлю список открытых вкладок...');
 
       try {
-        const links = await tabsRepository.listCurrentWindow();
+        const links = await listExportableTabs();
 
         if (links.length === 0) {
           setStatus(elements, 'info', 'Нет открытых страниц, которые можно экспортировать.');
@@ -157,7 +157,7 @@
           popupMessages.buildExportSuccessMessage({
             closedTabsCount,
             closeAfterExport: exportOptions.closeAfterExport,
-            exportedTabsCount: links.length,
+            exportedTabsCount: exportFile.exportedLinksCount,
             filename: exportFile.fullFilename,
             locationName: saveResult.locationName,
           }),
@@ -182,6 +182,14 @@
         filename,
         format,
       };
+    }
+
+    function listExportableTabs() {
+      if (typeof tabsRepository.listCurrentGroup === 'function') {
+        return tabsRepository.listCurrentGroup();
+      }
+
+      return tabsRepository.listCurrentWindow();
     }
 
     function normalizeFormat(format) {

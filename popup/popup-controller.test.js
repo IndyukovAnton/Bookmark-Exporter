@@ -86,6 +86,121 @@ test('popup controller restores settings, binds events and refreshes tabs summar
   assert.equal(elements.tabsLabel.textContent, 'вкладки');
 });
 
+test('popup controller restores JSON format from settings', async () => {
+  const formatInput = createElement();
+  const elements = {
+    closeAfterExport: createElement(),
+    exportBtn: createElement(),
+    filename: createElement(),
+    savePath: createElement(),
+    selectPathBtn: createElement(),
+    status: createElement(),
+    tabsCount: createElement(),
+    tabsLabel: createElement(),
+  };
+  const documentRef = createDocumentStub(elements, (selector) => {
+    if (selector === 'input[name="format"][value="json"]') {
+      return formatInput;
+    }
+
+    return null;
+  });
+  const controller = createPopupController({
+    documentRef,
+    settingsRepository: {
+      async getSettings() {
+        return {
+          closeAfterExport: false,
+          filename: 'saved-tabs',
+          format: 'json',
+          savePathName: 'Work exports',
+        };
+      },
+    },
+    tabsRepository: {
+      async listCurrentWindow() {
+        return [];
+      },
+    },
+    windowRef: {},
+  });
+
+  await controller.init();
+
+  assert.equal(formatInput.checked, true);
+});
+
+test('popup controller refreshes and exports current tab group when repository supports it', async () => {
+  let currentGroupCalls = 0;
+  let currentWindowCalls = 0;
+  const elements = {
+    closeAfterExport: createElement({ checked: false }),
+    exportBtn: createElement(),
+    filename: createElement({ value: 'group-tabs' }),
+    savePath: createElement(),
+    selectPathBtn: createElement(),
+    status: createElement(),
+    tabsCount: createElement(),
+    tabsLabel: createElement(),
+  };
+  const documentRef = createDocumentStub(elements, (selector) => {
+    if (selector === 'input[name="format"]:checked') {
+      return { value: 'json' };
+    }
+
+    return null;
+  });
+  const groupLinks = [
+    { id: 10, title: 'Group tab', url: 'https://example.com/group' },
+  ];
+  const controller = createPopupController({
+    documentRef,
+    fileSaveStrategies: {
+      async saveExportFile(exportFile) {
+        return {
+          locationName: exportFile.fullFilename,
+          usedDirectoryPicker: false,
+        };
+      },
+      supportsDirectoryPicker() {
+        return false;
+      },
+    },
+    settingsRepository: {
+      async getSettings() {
+        return {
+          closeAfterExport: false,
+          filename: 'group-tabs',
+          format: 'json',
+          savePathName: '',
+        };
+      },
+      async saveExportSettings() {},
+    },
+    tabsRepository: {
+      async listCurrentGroup() {
+        currentGroupCalls += 1;
+
+        return groupLinks;
+      },
+      async listCurrentWindow() {
+        currentWindowCalls += 1;
+
+        return [];
+      },
+    },
+    windowRef: {},
+  });
+
+  await controller.refreshTabsSummary(elements);
+  await controller.exportOpenTabs(elements);
+
+  assert.equal(currentGroupCalls, 3);
+  assert.equal(currentWindowCalls, 0);
+  assert.equal(elements.tabsCount.textContent, '1');
+  assert.equal(elements.status.className, 'status status--success');
+});
+
 test('popup controller exports, saves and closes tabs through injected adapters', async () => {
   const savedSettings = [];
   const savedFiles = [];

@@ -27,6 +27,7 @@ test('popup markup wires the tab exporter UI and scripts', () => {
   assert.match(html, /Browser Bookmarks Exporter/);
   assert.match(html, /id="tabsCount"/);
   assert.match(html, /id="closeAfterExport"/);
+  assert.match(html, /name="format" value="json"/);
   assert.deepEqual(scripts, [
     'core/tabs.js',
     'core/export-file.js',
