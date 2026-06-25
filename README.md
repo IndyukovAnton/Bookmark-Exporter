@@ -8,15 +8,15 @@
 
 1. Download the extension to a convenient location
 
-- "git clone https://github.com/IndyukovAnton/Bookmark-Exporter"
-- Archive
+- git clone https://github.com/IndyukovAnton/Bookmark-Exporter.git
+- https://github.com/IndyukovAnton/Bookmark-Exporter/archive/refs/heads/master.zip
 
-2. Enter 'chrome://extensions/' in the address bar
-3. Activate "Developer Mode" on the right
-4. Click "Load unpacked extension" in the top left and select the extension folder
-5. Click "Details" and enable "Pin to toolbar" to make the extension visible in the toolbar next to the address bar
-6. Click the extension icon, select the file extensions, enter a name (or leave the default "bookmarks"), select the save folder, and toggle closing exported tabs on/off
-7. Ready? Open the saved/downloaded file. All exported tabs will be there in the following format: URL (name).
+1. Enter 'chrome://extensions/' in the address bar
+2. Activate "Developer Mode" on the right
+3. Click "Load unpacked extension" in the top left and select the extension folder
+4. Click "Details" and enable "Pin to toolbar" to make the extension visible in the toolbar next to the address bar
+5. Click the extension icon, select the file extensions, enter a name (or leave the default "bookmarks"), select the save folder, and toggle closing exported tabs on/off
+6. Ready? Open the saved/downloaded file. All exported tabs will be there in the following format: URL (name).
 
 ---
 
@@ -40,8 +40,8 @@
 
 1. Скачайте расширение в удобное место
 
-- "git clone https://github.com/IndyukovAnton/Bookmark-Exporter"
-- Архивом
+- git clone https://github.com/IndyukovAnton/Bookmark-Exporter.git
+- https://github.com/IndyukovAnton/Bookmark-Exporter/archive/refs/heads/master.zip
 
 2. В адресной строке введите 'chrome://extensions/'
 3. Справа активируйте "Режим разработчика"
