@@ -1,16 +1,15 @@
-(function attachCore(root, factory) {
-  const core = factory();
+(function attachExportFileCore(root, factory) {
+  const exportFileCore = factory();
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = core;
+    module.exports = exportFileCore;
   }
 
   if (root) {
-    root.BookmarkExporterCore = core;
+    root.BookmarkExporterExportFile = exportFileCore;
   }
-}(typeof globalThis !== 'undefined' ? globalThis : undefined, function createCore() {
+}(typeof globalThis !== 'undefined' ? globalThis : undefined, function createExportFileCore() {
   const DEFAULT_FILENAME = 'open-tabs';
-  const EXPORTABLE_PROTOCOLS = new Set(['http:', 'https:', 'file:']);
   const FORMAT_CONFIG = {
     html: {
       extension: '.html',
@@ -25,48 +24,6 @@
       mimeType: 'text/plain',
     },
   };
-
-  function isExportableUrl(url) {
-    if (typeof url !== 'string' || url.trim() === '') {
-      return false;
-    }
-
-    try {
-      return EXPORTABLE_PROTOCOLS.has(new URL(url).protocol);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function normalizeOpenTabs(tabs) {
-    if (!Array.isArray(tabs)) {
-      return [];
-    }
-
-    return tabs
-      .filter((tab) => tab.pinned !== true && isExportableUrl(tab.url))
-      .map((tab) => {
-        const title = typeof tab.title === 'string' && tab.title.trim() !== ''
-          ? tab.title.trim()
-          : tab.url;
-
-        return {
-          id: tab.id,
-          title,
-          url: tab.url,
-        };
-      });
-  }
-
-  async function fetchOpenTabs(tabsApi) {
-    if (!tabsApi || typeof tabsApi.query !== 'function') {
-      throw new Error('Нет доступа к открытым вкладкам браузера.');
-    }
-
-    const tabs = await tabsApi.query({ currentWindow: true });
-
-    return normalizeOpenTabs(tabs);
-  }
 
   function sanitizeFilename(filename) {
     const sanitized = String(filename || DEFAULT_FILENAME)
@@ -132,6 +89,7 @@
     input:focus-visible { outline: 3px solid rgba(23, 107, 87, 0.24); border-color: #176b57; }
     #search-summary { margin: 0; color: #5f6b7a; font-size: 13px; }
     #empty-search { margin: 16px 0 0; padding: 16px; border: 1px solid #d9dee7; border-radius: 8px; color: #5f6b7a; background: #fff; text-align: center; }
+    .hidden { display: none; }
     ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
     li { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid #d9dee7; border-radius: 8px; background: #fff; }
     a { color: #176b57; font-weight: 700; text-decoration: none; }
@@ -150,7 +108,7 @@
     <ul id="tabs-list">
 ${items}
     </ul>
-    <p id="empty-search" hidden>Ничего не найдено</p>
+    <p id="empty-search" class="hidden">Ничего не найдено</p>
   </main>
   <script>
     (function initSearch() {
@@ -161,11 +119,12 @@ ${items}
 
       function updateSearch() {
         const query = searchInput.value.trim().toLowerCase();
+        const hasQuery = query !== '';
         let visibleCount = 0;
 
         items.forEach((item) => {
-          const isVisible = query === '' || item.textContent.toLowerCase().includes(query);
-          item.hidden = !isVisible;
+          const isVisible = !hasQuery || item.textContent.toLowerCase().includes(query);
+          item.classList.toggle('hidden', !isVisible);
 
           if (isVisible) {
             visibleCount += 1;
@@ -173,7 +132,7 @@ ${items}
         });
 
         summary.textContent = \`Найдено: \${visibleCount}\`;
-        emptySearch.hidden = visibleCount > 0;
+        emptySearch.classList.toggle('hidden', !hasQuery || visibleCount > 0);
       }
 
       searchInput.addEventListener('input', updateSearch);
@@ -207,8 +166,14 @@ ${items}
   }
 
   return {
+    DEFAULT_FILENAME,
+    FORMAT_CONFIG,
     buildExportFile,
-    fetchOpenTabs,
-    normalizeOpenTabs,
+    buildHtml,
+    buildMarkdown,
+    buildText,
+    escapeHtml,
+    escapeMarkdown,
+    sanitizeFilename,
   };
 }));

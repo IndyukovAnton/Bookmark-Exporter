@@ -1,14 +1,46 @@
+# ENG
+
+## A browser extension that allows you to quickly save necessary tabs and close them within the browser itself.
+
+### Available extensions for export: txt, markdown, html (as a separate page)
+
+## Installation steps:
+
+1. Download the extension to a convenient location
+
+- "git clone https://github.com/IndyukovAnton/Bookmark-Exporter"
+- Archive
+
+2. Enter 'chrome://extensions/' in the address bar
+3. Activate "Developer Mode" on the right
+4. Click "Load unpacked extension" in the top left and select the extension folder
+5. Click "Details" and enable "Pin to toolbar" to make the extension visible in the toolbar next to the address bar
+6. Click the extension icon, select the file extensions, enter a name (or leave the default "bookmarks"), select the save folder, and toggle closing exported tabs on/off
+7. Ready? Open the saved/downloaded file. All exported tabs will be there in the following format: URL (name).
+
+---
+
+# RU
+
 # BBE - Browser Bookmarks Exporter
 
 ## Расширение для браузера, которое позволит быстро сохранить необходимые вкладки и при этом, закрыть их в самом браузере.
 
 ### Доступные расширения для экспорта: txt, markdown, html (В виде отдельной страницы)
 
+## Безопасность и изоляция
+
+- Расширение работает только через popup и не добавляет `content_scripts`, `host_permissions`, `background`, `scripting` или `activeTab`.
+- Код не внедряется в открытые сайты и не изменяет DOM страниц пользователя.
+- Доступ к вкладкам ограничен чтением открытых вкладок текущего окна и закрытием экспортированных вкладок только после явного включения опции.
+- Выбор папки использует File System Access API только по нажатию пользователя. Если API недоступен, файл скачивается стандартным способом в загрузки браузера.
+- HTML-экспорт открывает ссылки с `rel="noreferrer noopener"`, чтобы сохранённый файл не передавал доступ к `window.opener`.
+
 ## Шаги по установки:
 
 1. Скачайте расширение в удобное место
 
-- git clone
+- "git clone https://github.com/IndyukovAnton/Bookmark-Exporter"
 - Архивом
 
 2. В адресной строке введите 'chrome://extensions/'
@@ -17,3 +49,4 @@
 5. Нажмите сведения и включите "Закрепить на панели инструментов", чтобы расширение было видно на панели рядом с адресной строкой
 6. Нажмите на иконку расширения, выберите расширения файла, введите название (или оставьте по умолчанию bookmarks) выберите папку, куда нужно будет сохранить и выключите/включите закрытие экспортированных вкладок
 7. Готов, откройте сохранённый/скачанный файл, все экспортированные вкладки будут там в формате: URL (название).
+

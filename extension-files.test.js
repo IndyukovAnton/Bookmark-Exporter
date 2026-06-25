@@ -9,12 +9,34 @@ test('manifest requests tabs access instead of bookmarks access', () => {
   assert.equal(manifest.permissions.includes('bookmarks'), false);
 });
 
+test('manifest keeps the extension isolated from visited pages', () => {
+  const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+
+  assert.equal(manifest.host_permissions, undefined);
+  assert.equal(manifest.content_scripts, undefined);
+  assert.equal(manifest.background, undefined);
+  assert.equal(manifest.permissions.includes('scripting'), false);
+  assert.equal(manifest.permissions.includes('activeTab'), false);
+});
+
 test('popup markup wires the tab exporter UI and scripts', () => {
   const html = fs.readFileSync('popup.html', 'utf8');
+  const scripts = Array.from(html.matchAll(/<script src="([^"]+)"><\/script>/g))
+    .map((match) => match[1]);
 
-  assert.match(html, /Открытые вкладки/);
+  assert.match(html, /Browser Bookmarks Exporter/);
   assert.match(html, /id="tabsCount"/);
   assert.match(html, /id="closeAfterExport"/);
-  assert.match(html, /<script src="popup-core\.js"><\/script>\s*<script src="popup\.js"><\/script>/);
+  assert.deepEqual(scripts, [
+    'core/tabs.js',
+    'core/export-file.js',
+    'browser/chromium-tabs.js',
+    'browser/chromium-storage.js',
+    'browser/file-save-strategies.js',
+    'popup/messages.js',
+    'popup/popup-controller.js',
+    'popup.js',
+  ]);
   assert.doesNotMatch(html, /deleteAfterExport|Экспорт закладок/);
+  assert.doesNotMatch(html, /popup-core\.js/);
 });
