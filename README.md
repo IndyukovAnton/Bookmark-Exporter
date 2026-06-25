@@ -1,6 +1,6 @@
 # ENG
 
-## A browser extension that allows you to quickly save necessary tabs and close them within the browser itself.
+## A browser extension that allows you to quickly save necessary tabs, close them within the browser itself, and reopen exported links later.
 
 ### Available extensions for export: txt, markdown, html (as a separate page), json
 
@@ -15,8 +15,8 @@
 2. Activate "Developer Mode" on the right
 3. Click "Load unpacked extension" in the top left and select the extension folder
 4. Click "Details" and enable "Pin to toolbar" to make the extension visible in the toolbar next to the address bar
-5. Click the extension icon, select the file extensions, enter a name (or leave the default "bookmarks"), select the save folder, and toggle closing exported tabs on/off
-6. Ready? Open the saved/downloaded file. All exported tabs will be there in the following format: URL (name).
+5. Click the extension icon and use the "Export" tab to select the file extension, enter a name, select the save folder, and toggle closing exported tabs on/off.
+6. Use the "Import" tab to select an exported file or paste exported content, then open the links again.
 
 ---
 
@@ -24,7 +24,7 @@
 
 # BBE - Browser Bookmarks Exporter
 
-## Расширение для браузера, которое позволит быстро сохранить необходимые вкладки и при этом, закрыть их в самом браузере.
+## Расширение для браузера, которое позволит быстро сохранить необходимые вкладки, закрыть их в самом браузере и позже заново открыть экспортированные ссылки.
 
 ### Доступные расширения для экспорта: txt, markdown, html (В виде отдельной страницы), json
 
@@ -33,6 +33,7 @@
 - Расширение работает только через popup и не добавляет `content_scripts`, `host_permissions`, `background`, `scripting` или `activeTab`.
 - Код не внедряется в открытые сайты и не изменяет DOM страниц пользователя.
 - Доступ к вкладкам ограничен чтением открытых вкладок текущей группы, если браузер отдаёт `groupId`, с fallback на текущее окно. Закрытие экспортированных вкладок выполняется только после явного включения опции.
+- Импорт открывает только поддерживаемые ссылки из JSON, MD, TXT и HTML экспорта; дубли по URL пропускаются.
 - Выбор папки использует File System Access API только по нажатию пользователя. Если API недоступен, файл скачивается стандартным способом в загрузки браузера.
 - HTML-экспорт открывает ссылки с `rel="noreferrer noopener"`, чтобы сохранённый файл не передавал доступ к `window.opener`.
 
@@ -47,5 +48,5 @@
 3. Справа активируйте "Режим разработчика"
 4. Слева сверху нажмите "Загрузить распакованное расширение" и выбери папку расширения
 5. Нажмите сведения и включите "Закрепить на панели инструментов", чтобы расширение было видно на панели рядом с адресной строкой
-6. Нажмите на иконку расширения, выберите расширения файла, введите название (или оставьте по умолчанию bookmarks) выберите папку, куда нужно будет сохранить и выключите/включите закрытие экспортированных вкладок
-7. Готов, откройте сохранённый/скачанный файл, все экспортированные вкладки будут там в формате: URL (название).
+6. Нажмите на иконку расширения и используйте вкладку "Экспорт": выберите формат файла, имя, папку сохранения и опцию закрытия вкладок.
+7. Используйте вкладку "Импорт": выберите экспортированный файл или вставьте его содержимое, затем откройте ссылки заново.

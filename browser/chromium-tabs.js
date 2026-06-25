@@ -86,10 +86,40 @@
       return closedTabsCount;
     }
 
+    async function openUrls(urls) {
+      if (!tabsApi || typeof tabsApi.create !== 'function') {
+        throw new Error('Нет доступа к открытию вкладок браузера.');
+      }
+
+      const uniqueUrls = Array.from(new Set(
+        urls
+          .filter((url) => typeof url === 'string')
+          .map((url) => url.trim())
+          .filter((url) => tabsCore.isExportableUrl(url)),
+      ));
+
+      let openedTabsCount = 0;
+
+      for (const url of uniqueUrls) {
+        try {
+          await tabsApi.create({
+            active: false,
+            url,
+          });
+          openedTabsCount += 1;
+        } catch (error) {
+          logger.warn(`Could not open tab ${url}:`, error);
+        }
+      }
+
+      return openedTabsCount;
+    }
+
     return {
       closeByIds,
       listCurrentGroup,
       listCurrentWindow,
+      openUrls,
     };
   }
 

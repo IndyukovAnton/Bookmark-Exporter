@@ -133,3 +133,38 @@ test('tabs repository falls back to individual closing after bulk browser errors
   assert.deepEqual(removedTabIds, [1, 4]);
   assert.equal(warningCalls.length, 2);
 });
+
+test('tabs repository opens imported URLs in inactive tabs and continues after browser errors', async () => {
+  const createCalls = [];
+  const warningCalls = [];
+  const tabsApi = {
+    async create(params) {
+      createCalls.push(params);
+
+      if (params.url === 'https://example.com/broken') {
+        throw new Error('Cannot open tab');
+      }
+    },
+  };
+  const logger = {
+    warn(...args) {
+      warningCalls.push(args);
+    },
+  };
+
+  const repository = createTabsRepository(tabsApi, { logger });
+  const openedTabsCount = await repository.openUrls([
+    'https://example.com/docs',
+    '',
+    'https://example.com/broken',
+    'https://example.com/issues',
+  ]);
+
+  assert.equal(openedTabsCount, 2);
+  assert.deepEqual(createCalls, [
+    { active: false, url: 'https://example.com/docs' },
+    { active: false, url: 'https://example.com/broken' },
+    { active: false, url: 'https://example.com/issues' },
+  ]);
+  assert.equal(warningCalls.length, 1);
+});

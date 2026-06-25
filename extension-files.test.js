@@ -27,14 +27,24 @@ test('popup markup wires the tab exporter UI and scripts', () => {
   assert.match(html, /Browser Bookmarks Exporter/);
   assert.match(html, /id="tabsCount"/);
   assert.match(html, /id="closeAfterExport"/);
+  assert.match(html, /id="exportTabBtn"/);
+  assert.match(html, /id="importTabBtn"/);
+  assert.match(html, /id="importText"/);
+  assert.match(html, /id="importBtn"/);
   assert.match(html, /name="format" value="json"/);
+  assert.match(html, /<link rel="stylesheet" href="popup\/popup\.css">/);
+  assert.doesNotMatch(html, /<style>/);
   assert.deepEqual(scripts, [
     'core/tabs.js',
     'core/export-file.js',
+    'core/import-file.js',
     'browser/chromium-tabs.js',
     'browser/chromium-storage.js',
     'browser/file-save-strategies.js',
     'popup/messages.js',
+    'popup/dom.js',
+    'popup/export-flow.js',
+    'popup/import-flow.js',
     'popup/popup-controller.js',
     'popup.js',
   ]);
